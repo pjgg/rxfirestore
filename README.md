@@ -1,4 +1,5 @@
 # RxFirestore (Alpha)
+[![Build Status](https://travis-ci.org/pjgg/rxfirestore.svg?branch=master)](https://travis-ci.org/pjgg/rxfirestore)
 <img align="right" src="https://github.com/pjgg/rxfirestore/blob/master/firestoreLogo.png">
 
 RxFirestore is a [Firestore](https://cloud.google.com/firestore/) SDK written in a reactive way.
