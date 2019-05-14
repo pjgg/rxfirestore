@@ -1,0 +1,10 @@
+#!/bin/sh
+
+bodyMsg="$(cat $1)"
+if echo $bodyMsg | grep -E '(fix|hotfix|feature|docs|style|refactor|test|chore)\(([^)]+)\):(\s?\#)(([A-Z0-9a-z]{1,10})-?[A-Z]{1}[A-Z0-9]+-\d+)([\s\w]*)' "$1"; then
+exit 0
+fi
+
+echo "******  This commit doesn't follow Masmovil Git commit conventions"
+echo "Commit Convention REF: https://mmsistemas.atlassian.net/wiki/spaces/ITT/pages/796065853/GIT+Conventions"
+exit 1
