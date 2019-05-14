@@ -1,0 +1,24 @@
+language: java
+branches:
+  only:
+  - master
+  - "/^feature-.*/"
+  - "/^hotfix-.*/"
+  - "/^fix-.*/"
+  - "/^chore-.*/"
+  - "/^doc-.*/"
+jobs:
+  include:
+  - stage: compile
+    name: OracleJDK 8 / Build / Test
+    jdk: oraclejdk8
+    script: mvn clean test install
+notifications:
+  email:
+    recipients:
+    - pablo.gonzalez.granados@gmail.com
+    on_success: always
+    on_failure: always
+before_install:
+- openssl aes-256-cbc -K $encrypted_35cc27c77d19_key -iv $encrypted_35cc27c77d19_iv
+  -in keyfile.json.enc -out keyfile.json -d
