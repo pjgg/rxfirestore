@@ -1,0 +1,25 @@
+language: java
+branches:
+  only:
+    - master
+    - /^feature-.*/
+    - /^hotfix-.*/
+    - /^fix-.*/
+    - /^chore-.*/
+    - /^doc-.*/
+jobs:
+  include:
+    - stage: compile
+        name: "OracleJDK 8 / Compile"
+        jdk: oraclejdk8
+        script: mvn clean install -DskipTests=true
+    - stage: test
+        name: "OracleJDK 8 / Test"
+        jdk: oraclejdk8
+        script: mvn test
+notifications:
+  email:
+    recipients:
+      - pablo.gonzalez.granados@gmail.com
+    on_success: always
+    on_failure: always
