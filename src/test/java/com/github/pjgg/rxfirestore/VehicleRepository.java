@@ -17,10 +17,12 @@
 
 package com.github.pjgg.rxfirestore;
 
+import io.vertx.reactivex.core.Vertx;
+
 public class VehicleRepository extends RxFirestoreSdk<Vehicle> {
 
-	public VehicleRepository() {
-		super(Vehicle::new);
+	public VehicleRepository(Vertx vertx) {
+		super(Vehicle::new, vertx);
 	}
 
 }

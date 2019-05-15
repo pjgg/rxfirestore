@@ -19,26 +19,30 @@ package com.github.pjgg.rxfirestore;
 
 import static org.junit.Assert.assertNotNull;
 
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import org.junit.Before;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(VertxExtension.class)
 public class RxFirestoreInsertTest {
 
-	//TODO: You need to set your Gcloud creadentials as enviroment variable, example: GCLOUD_KEY_PATH=/Users/pablo/Desktop/keyfile.json
-	private VehicleRepository vehicleRepository = new VehicleRepository();
 	private final String brandName = "Toyota";
+	private VertxTestContext testContext;
 
 	@Before
 	public void clean_scenario() {
-		Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
-		vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
-			vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
+		testContext = new VertxTestContext();
+
+		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
+			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
 		});
-		System.out.println("Done!");
 	}
 
 	@Test
@@ -46,7 +50,7 @@ public class RxFirestoreInsertTest {
 
 		TestObserver<String> testObserver = new TestObserver();
 		Vehicle vehicle = new Vehicle(brandName, "Auris", true);
-		Single<String> ID = vehicleRepository.insert(vehicle);
+		Single<String> ID = TestSuite.getInstance().vehicleRepository.insert(vehicle);
 		Observable<String> result = Observable.fromFuture(ID.toFuture());
 
         result.subscribe(testObserver);
