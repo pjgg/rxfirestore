@@ -17,50 +17,58 @@
 
 package com.github.pjgg.rxfirestore;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.reactivex.core.Vertx;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-
+@ExtendWith(VertxExtension.class)
 public class ListenerQueryTest {
 
-	VehicleRepository vehicleRepository = new VehicleRepository();
 	private final String brandName = "Toyota";
+	private VertxTestContext testContext;
 
 	@Before
 	public void clean_scenario() {
-
-		Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
-		vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
-			vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
+		testContext = new VertxTestContext();
+		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
+			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
 		});
-		System.out.println("Done!");
 	}
 
 	@Test
-	public void should_subscribe_to_query() throws InterruptedException, TimeoutException, ExecutionException {
+	public void should_subscribe_to_query() throws Throwable {
 		final int ITERATIONS = 4;
 		final String randomModel = UUID.randomUUID().toString();
 		final CountDownLatch latch = new CountDownLatch(ITERATIONS);
 		for (int i = 0; i < ITERATIONS; i++) {
 			Vehicle vehicle = new Vehicle(brandName, randomModel, true);
-			vehicleRepository.insert(vehicle)
+			TestSuite.getInstance().vehicleRepository.insert(vehicle)
 					.doOnError(error -> System.out.println(error.getMessage()))
 					.subscribe(id -> {
 						System.out.println(id);
 						latch.countDown();
 					});
 		}
+
 		latch.await();
-		boolean ends = listenEventTask(vehicleRepository, ITERATIONS,
-				vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME).whereEqualTo("model", randomModel));
+		boolean ends = listenEventTask(TestSuite.getInstance().vehicleRepository, ITERATIONS,
+			TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME).whereEqualTo("model", randomModel));
+
+		assertThat(testContext.awaitCompletion(10, TimeUnit.SECONDS)).isTrue();
 		assertTrue(ends);
 	}
 
@@ -78,10 +86,12 @@ public class ListenerQueryTest {
 				, error -> {
 					System.err.println(error.getMessage());
 					result.set(false);
+				    testContext.failNow(error);
 					latch.countDown();
 				});
 
 		latch.await();
+		testContext.completeNow();
 		listener.getRegistration().remove();
 		return result.get();
 	}

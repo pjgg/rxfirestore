@@ -17,36 +17,45 @@
 
 package com.github.pjgg.rxfirestore;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+
+
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(VertxExtension.class)
 public class RxFirestoreUpdateTest {
 
-	//TODO: You need to set your Gcloud creadentials as enviroment variable, example: GCLOUD_KEY_PATH=/Users/pablo/Desktop/keyfile.json
-	private VehicleRepository vehicleRepository = new VehicleRepository();
 	private final String brandName = "Toyota";
+	private VertxTestContext testContext;
 
 	@Before
 	public void clean_scenario() {
-		Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
-		vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
-			vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
+		testContext = new VertxTestContext();
+
+		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
+			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
 		});
-		System.out.println("Done!");
 	}
 
 	@Test
-	public void should_update_car() {
+	public void testshould_update_car() throws InterruptedException {
 
 		TestObserver<Boolean> testObserver = new TestObserver();
 		String expectedModel = "Auris_updated";
 		Vehicle vehicle = new Vehicle(brandName, "Auris", true);
-		Single<Boolean> isUpdated = vehicleRepository.insert(vehicle).flatMap(id -> {
+		Single<Boolean> isUpdated = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> {
 			vehicle.setModel(expectedModel);
-			return vehicleRepository.update(id, vehicle.getCollectionName(), vehicle);
+			return TestSuite.getInstance().vehicleRepository.update(id, vehicle.getCollectionName(), vehicle);
 		});
 
 		Observable<Boolean> result = Observable.fromFuture(isUpdated.toFuture());
@@ -54,7 +63,12 @@ public class RxFirestoreUpdateTest {
 
 		testObserver.assertComplete();
 		testObserver.assertNoErrors();
-		testObserver.assertNever(r -> r == false);
+		testObserver.assertNever(r -> {
+			testContext.completeNow();
+			return r == false;
+		});
+
+		assertThat(testContext.awaitCompletion(1, TimeUnit.SECONDS)).isTrue();
 	}
 
 

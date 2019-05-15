@@ -4,6 +4,7 @@ branches:
   - master
   - "/^feature-.*/"
   - "/^hotfix-.*/"
+  - "/^test-.*/"
   - "/^fix-.*/"
   - "/^chore-.*/"
   - "/^doc-.*/"

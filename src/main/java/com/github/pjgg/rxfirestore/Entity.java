@@ -26,6 +26,9 @@ public interface Entity {
 
 	String getCollectionName();
 
+	/**
+	 * Note that your will receive two extra fields _id and _eventType
+	 * */
 	Entity fromJsonAsMap(Map<String, Object> json);
 
 }

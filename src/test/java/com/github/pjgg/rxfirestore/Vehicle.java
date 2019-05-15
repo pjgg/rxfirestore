@@ -28,8 +28,8 @@ public class Vehicle implements Entity {
 	public final static String ELECTRIC = "electric";
 
 
-	private transient String id;
-	private transient String eventType;
+	private String id;
+	private String eventType;
 	private String brand;
 	private String model;
 	private Boolean electric;

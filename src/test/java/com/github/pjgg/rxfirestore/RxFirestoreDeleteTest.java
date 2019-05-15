@@ -17,33 +17,45 @@
 
 package com.github.pjgg.rxfirestore;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.reactivex.core.Vertx;
+import java.util.concurrent.TimeUnit;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(VertxExtension.class)
 public class RxFirestoreDeleteTest {
 
-	//TODO: You need to set your Gcloud creadentials as enviroment variable, example: GOOGLE_APPLICATION_CREDENTIALS=/Users/pablo/Desktop/keyfile.json
-	private VehicleRepository vehicleRepository = new VehicleRepository();
 	private final String brandName = "Toyota";
 
 	@Before
 	public void clean_scenario() {
-		Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
-		vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
-			vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
+
+		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
+			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
 		});
-		System.out.println("Done!");
 	}
 
 	@Test
-	public void should_delete_car() {
-
+	public void should_delete_car() throws Throwable {
+		VertxTestContext testContext = new VertxTestContext();
 		TestObserver<Boolean> testObserver = new TestObserver();
 		Vehicle vehicle = new Vehicle(brandName, "Auris", true);
-		Single<Boolean> isDeleted  = vehicleRepository.insert(vehicle).flatMap(id -> vehicleRepository.delete(id, Vehicle.CARS_COLLECTION_NAME));
+		Single<Boolean> isDeleted  = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> {
+			testContext.completeNow();
+			return TestSuite.getInstance().vehicleRepository.delete(id, Vehicle.CARS_COLLECTION_NAME);
+		});
+
 		Observable<Boolean> result = Observable.fromFuture(isDeleted.toFuture());
 
 		result.subscribe(testObserver);
@@ -51,5 +63,8 @@ public class RxFirestoreDeleteTest {
 		testObserver.assertComplete();
 		testObserver.assertNoErrors();
 		testObserver.assertNever(r -> r == false);
+
+		assertThat(testContext.awaitCompletion(3, TimeUnit.SECONDS)).isTrue();
+
 	}
 }
