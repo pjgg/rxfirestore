@@ -17,6 +17,8 @@
 
 package com.github.pjgg.rxfirestore;
 
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -24,20 +26,21 @@ import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(VertxExtension.class)
 public class RxfirestoreGetTest {
 
-	//TODO: You need to set your Gcloud creadentials as enviroment variable, example: GCLOUD_KEY_PATH=/Users/pablo/Desktop/keyfile.json
-	private VehicleRepository vehicleRepository = new VehicleRepository();
 	private final String brandName = "Toyota";
+	private VertxTestContext testContext;
 
 	@Before
 	public void clean_scenario() {
-		Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
-		vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
-			vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
+		testContext = new VertxTestContext();
+		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
+			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
 		});
-		System.out.println("Done!");
 	}
 
 	@Test
@@ -46,7 +49,7 @@ public class RxfirestoreGetTest {
 		TestObserver<Vehicle> testObserver = new TestObserver();
 		String expectedModel = "Auris";
 		Vehicle vehicle = new Vehicle(brandName, expectedModel, true);
-		Single<Vehicle> retrievedCar = vehicleRepository.insert(vehicle).flatMap(id -> vehicleRepository.get(id, Vehicle.CARS_COLLECTION_NAME));
+		Single<Vehicle> retrievedCar = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> TestSuite.getInstance().vehicleRepository.get(id, Vehicle.CARS_COLLECTION_NAME));
 		Observable<Vehicle> result = Observable.fromFuture(retrievedCar.toFuture());
 
 		result.subscribe(testObserver);
@@ -63,7 +66,9 @@ public class RxfirestoreGetTest {
 		TestObserver<List<Vehicle>> testObserver = new TestObserver();
 		String expectedModel = "Auris";
 		Vehicle vehicle = new Vehicle(brandName, expectedModel, true);
-		Single<List<Vehicle>> vehicles = vehicleRepository.insert(vehicle).flatMap(id -> vehicleRepository.queryBuilder(Vehicle.CARS_COLLECTION_NAME).flatMap(query -> vehicleRepository.get(query)));
+		Single<List<Vehicle>> vehicles = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id ->
+			TestSuite.getInstance().vehicleRepository.queryBuilder(Vehicle.CARS_COLLECTION_NAME)
+				.flatMap(query -> TestSuite.getInstance().vehicleRepository.get(query)));
 		Observable<List<Vehicle>> result = Observable.fromFuture(vehicles.toFuture());
 
 		result.subscribe(testObserver);
