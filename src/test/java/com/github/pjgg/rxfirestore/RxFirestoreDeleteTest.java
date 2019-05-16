@@ -66,5 +66,6 @@ public class RxFirestoreDeleteTest {
 
 		assertThat(testContext.awaitCompletion(3, TimeUnit.SECONDS)).isTrue();
 
+
 	}
 }

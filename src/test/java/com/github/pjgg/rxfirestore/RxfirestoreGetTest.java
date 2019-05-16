@@ -42,11 +42,11 @@ public class RxfirestoreGetTest {
 	public void clean_scenario() {
 		testContext = new VertxTestContext();
 		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
-		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet()
-			.forEach(vehicle -> {
-				TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME)
-					.blockingGet();
-			});
+
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
+			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
+		});
+
 	}
 
 	@Test
@@ -55,8 +55,8 @@ public class RxfirestoreGetTest {
 		TestObserver<Vehicle> testObserver = new TestObserver();
 		String expectedModel = "Auris";
 		Vehicle vehicle = new Vehicle(brandName, expectedModel, true);
-		Single<Vehicle> retrievedCar = TestSuite.getInstance().vehicleRepository.insert(vehicle)
-			.flatMap(id -> TestSuite.getInstance().vehicleRepository.get(id, Vehicle.CARS_COLLECTION_NAME));
+
+		Single<Vehicle> retrievedCar = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> TestSuite.getInstance().vehicleRepository.get(id, Vehicle.CARS_COLLECTION_NAME));
 		Observable<Vehicle> result = Observable.fromFuture(retrievedCar.toFuture());
 
 		result.subscribe(testObserver);
@@ -139,6 +139,7 @@ public class RxfirestoreGetTest {
 				.whereEqualTo("model", "doesn't exist");
 			return vehicleRepository.get(query);
 		});
+
 
 		Observable<List<Vehicle>> result = Observable.fromFuture(vehicles.toFuture());
 
