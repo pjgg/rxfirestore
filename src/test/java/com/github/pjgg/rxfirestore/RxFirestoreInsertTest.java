@@ -17,10 +17,12 @@
 
 package com.github.pjgg.rxfirestore;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 
 import io.reactivex.Observable;
@@ -58,9 +60,11 @@ public class RxFirestoreInsertTest {
 		testObserver.assertComplete();
 		testObserver.assertNoErrors();
 		testObserver.assertOf(id -> {
-			System.out.println(id.values());
+			testContext.completeNow();
 			assertNotNull(id);
 		});
+
+		assertThat(testContext.awaitCompletion(1, TimeUnit.SECONDS)).isTrue();
 	}
 
 }

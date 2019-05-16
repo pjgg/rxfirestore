@@ -64,10 +64,8 @@ public class RxFirestoreDeleteTest {
 		testObserver.assertNoErrors();
 		testObserver.assertNever(r -> r == false);
 
-		assertThat(testContext.awaitCompletion(10, TimeUnit.SECONDS)).isTrue();
-		if (testContext.failed()) {
-			throw testContext.causeOfFailure();
-		}
+		assertThat(testContext.awaitCompletion(3, TimeUnit.SECONDS)).isTrue();
+
 
 	}
 }

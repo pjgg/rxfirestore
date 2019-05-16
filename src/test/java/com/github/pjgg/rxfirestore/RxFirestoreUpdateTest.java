@@ -17,6 +17,8 @@
 
 package com.github.pjgg.rxfirestore;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -24,6 +26,8 @@ import io.reactivex.observers.TestObserver;
 
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +49,7 @@ public class RxFirestoreUpdateTest {
 	}
 
 	@Test
-	public void testshould_update_car() {
+	public void testshould_update_car() throws InterruptedException {
 
 		TestObserver<Boolean> testObserver = new TestObserver();
 		String expectedModel = "Auris_updated";
@@ -60,7 +64,12 @@ public class RxFirestoreUpdateTest {
 
 		testObserver.assertComplete();
 		testObserver.assertNoErrors();
-		testObserver.assertNever(r -> r == false);
+		testObserver.assertNever(r -> {
+			testContext.completeNow();
+			return r == false;
+		});
+
+		assertThat(testContext.awaitCompletion(1, TimeUnit.SECONDS)).isTrue();
 	}
 
 

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import io.vertx.reactivex.core.Vertx;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -69,9 +68,6 @@ public class ListenerQueryTest {
 			TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME).whereEqualTo("model", randomModel));
 
 		assertThat(testContext.awaitCompletion(10, TimeUnit.SECONDS)).isTrue();
-		if (testContext.failed()) {
-			throw testContext.causeOfFailure();
-		}
 
 		assertTrue(ends);
 	}
