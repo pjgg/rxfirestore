@@ -26,6 +26,7 @@ public class Vehicle implements Entity {
 	public final static String BRAND = "brand";
 	public final static String MODEL = "model";
 	public final static String ELECTRIC = "electric";
+	public final static String DISPLACEMENT = "displacement";
 
 
 	private String id;
@@ -33,19 +34,26 @@ public class Vehicle implements Entity {
 	private String brand;
 	private String model;
 	private Boolean electric;
+	private Number displacement;
 
-	public Vehicle(){}
+	public Vehicle() {
+	}
 
-	public Vehicle(String brand, String model, Boolean electric){
+	public Vehicle(String brand, String model, Boolean electric) {
 		this.brand = brand;
 		this.model = model;
 		this.electric = electric;
-
+		this.displacement = 0;
 	}
 
 	@Override
 	public HashMap<String, Object> toMap() {
-		return new HashMap<String, Object>(){{put(BRAND,brand);put(MODEL,model);put(ELECTRIC,electric); }};
+		return new HashMap<String, Object>() {{
+			put(BRAND, brand);
+			put(MODEL, model);
+			put(ELECTRIC, electric);
+			put(DISPLACEMENT, displacement);
+		}};
 	}
 
 	@Override
@@ -56,11 +64,13 @@ public class Vehicle implements Entity {
 	@Override
 	public Entity fromJsonAsMap(Map<String, Object> json) {
 
-		this.brand = (String)json.get(BRAND);
-		this.model = (String)json.get(MODEL);
-		this.electric = (Boolean)json.get(ELECTRIC);
-		this.id = (String)json.get("_id");
-		this.eventType = (String)json.get("_eventType");
+		this.brand = (String) json.getOrDefault(BRAND, "NONE");
+		this.model = (String) json.getOrDefault(MODEL, "NONE");
+		this.electric = (Boolean) json.getOrDefault(ELECTRIC, false);
+
+		this.displacement = (Number) json.getOrDefault("displacement", 0);
+		this.id = (String) json.getOrDefault("_id", "NONE");
+		this.eventType = (String) json.getOrDefault("_eventType", "NONE");
 
 		return this;
 	}
@@ -103,5 +113,13 @@ public class Vehicle implements Entity {
 
 	public void setEventType(String eventType) {
 		this.eventType = eventType;
+	}
+
+	public Number getDisplacement() {
+		return displacement;
+	}
+
+	public void setDisplacement(Number displacement) {
+		this.displacement = displacement;
 	}
 }

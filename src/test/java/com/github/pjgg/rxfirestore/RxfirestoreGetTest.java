@@ -17,6 +17,7 @@
 
 package com.github.pjgg.rxfirestore;
 
+import static com.github.pjgg.rxfirestore.Vehicle.DISPLACEMENT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.vertx.junit5.VertxExtension;
@@ -107,6 +108,36 @@ public class RxfirestoreGetTest {
 		Single<List<Vehicle>> vehicles = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> {
 			Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME)
 				.whereEqualTo("model", "Auris");
+			return vehicleRepository.get(query);
+		});
+
+		Observable<List<Vehicle>> result = Observable.fromFuture(vehicles.toFuture());
+
+		result.subscribe(testObserver);
+
+		testObserver.assertComplete();
+		testObserver.assertNoErrors();
+
+		testObserver.values().stream().forEach(vehicleList -> vehicleList.forEach(v -> {
+			v.getBrand().equalsIgnoreCase(brandName);
+			testContext.completeNow();
+		}));
+
+		assertThat(testContext.awaitCompletion(1, TimeUnit.SECONDS)).isTrue();
+
+	}
+
+	@Test
+	public void should_get_where_greaterThan() throws Throwable {
+		TestObserver<List<Vehicle>> testObserver = new TestObserver();
+		String expectedModel = "Auris";
+		VehicleRepository vehicleRepository = TestSuite.getInstance().vehicleRepository;
+		Vehicle vehicle = new Vehicle(brandName, expectedModel, true);
+		vehicle.setDisplacement(1001);
+
+		Single<List<Vehicle>> vehicles = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> {
+			Query query = vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME)
+				.whereGreaterThan(DISPLACEMENT, 1000);
 			return vehicleRepository.get(query);
 		});
 
