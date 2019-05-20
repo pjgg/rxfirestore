@@ -66,11 +66,11 @@ This event bus will be consumed by a Vertx Actor (Worker Verticle), executing al
 1. Add in your pom the following dependency:
 
 ```
- <dependency>
-   <groupId>com.github.pjgg</groupId>
-   <artifactId>rxfirestore</artifactId>
-   <version>1.0.0-SNAPSHOT</version>
- </dependency>
+<dependency>
+  <groupId>com.github.pjgg</groupId>
+  <artifactId>rxfirestore</artifactId>
+  <version>1.0.0</version>
+</dependency>
 ```
 
 2. Create your own repository and extends `RxFirestoreSdk`. You must provide your entity model as parameters.
