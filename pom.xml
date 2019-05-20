@@ -61,7 +61,7 @@
     <connection>scm:git:git://github.com:pjgg/rxfirestore.git</connection>
     <developerConnection>scm:git:git@github.com:pjgg/rxfirestore.git</developerConnection>
     <url>https://github.com/pjgg/tree/master/rxfirestore</url>
-    <tag>rxfirestore-1.0.0</tag>
+    <tag>1.0.0</tag>
   </scm>
 
   <dependencyManagement>
@@ -228,7 +228,7 @@
           <localCheckout>true</localCheckout>
           <pushChanges>false</pushChanges>
           <mavenExecutorId>forked-path</mavenExecutorId>
-          <arguments>-Dgpg.passphrase=${gpg.passphrase} -Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true</arguments>
+          <arguments>-Dgpg.passphrase=${gpg.passphrase} -Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true  -Dmaven.javadoc.skip=false</arguments>
         </configuration>
       </plugin>
 
