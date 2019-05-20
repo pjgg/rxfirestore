@@ -228,7 +228,7 @@
           <localCheckout>true</localCheckout>
           <pushChanges>false</pushChanges>
           <mavenExecutorId>forked-path</mavenExecutorId>
-          <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
+          <arguments>-Dgpg.passphrase=${gpg.passphrase} -Dmaven.javadoc.skip=true -Dmaven.test.skipTests=true -Dmaven.test.skip=true</arguments>
         </configuration>
       </plugin>
 
@@ -251,6 +251,19 @@
         <executions>
           <execution>
             <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
             <goals>
               <goal>jar</goal>
             </goals>
