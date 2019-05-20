@@ -5,7 +5,7 @@
   <groupId>com.github.pjgg</groupId>
   <artifactId>rxfirestore</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.1-SNAPSHOT</version>
 
   <name>rxFirestore Gcloud Connectors</name>
   <url>https://github.com/pjgg/tree/master/rxfirestore</url>
