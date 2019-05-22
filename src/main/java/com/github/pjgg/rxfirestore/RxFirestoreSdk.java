@@ -115,6 +115,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<String> empty(final String collectionName) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 
@@ -137,6 +138,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<Query> queryBuilder(final String collectionName) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 
@@ -158,6 +160,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<List<E>> get(Query query) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 
 		return eventBus.<String>rxSend(TOPIC_QUERY, SerializationUtils.serialize(query), deliveryOpt)
@@ -181,6 +184,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<E> get(final String id, final String collectionName) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
@@ -207,6 +211,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<Boolean> upsert(final String id, final String collectionName, final E entity) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
@@ -225,6 +230,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<Boolean> update(final String id, final String collectionName, final E entity) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
@@ -243,6 +249,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public Single<Boolean> delete(final String id, final String collectionName) {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
@@ -289,6 +296,7 @@ public class RxFirestoreSdk<E extends Entity> {
 	public void closeConnection() {
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
+		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		eventBus.publish(TOPIC_CLOSE, null, deliveryOpt);
 	}

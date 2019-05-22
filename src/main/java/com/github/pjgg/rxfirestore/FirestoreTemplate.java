@@ -18,6 +18,9 @@
 package com.github.pjgg.rxfirestore;
 
 import com.google.cloud.firestore.CollectionReference;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.eventbus.EventBus;
 import java.io.File;
 import java.io.FileInputStream;
@@ -48,6 +51,7 @@ import io.vertx.reactivex.core.eventbus.MessageConsumer;
 
 public class FirestoreTemplate extends AbstractVerticle {
 
+	private Logger Log = LoggerFactory.getLogger(FirestoreTemplate.class);
 
 	public static final List<String> SCOPES = ImmutableList.of("https://www.googleapis.com/auth/datastore");
 	public static final String TOPIC_INSERT = "FIRESTORE_INSERT";
@@ -67,11 +71,11 @@ public class FirestoreTemplate extends AbstractVerticle {
 		try {
 
 			String keyPath = Optional.ofNullable(System.getenv("GOOGLE_APPLICATION_CREDENTIALS")).orElseThrow(
-					() -> new IllegalArgumentException("GOOGLE_APPLICATION_CREDENTIALS is not set in the environment"));
+				() -> new IllegalArgumentException("GOOGLE_APPLICATION_CREDENTIALS is not set in the environment"));
 
 			firestore = FirestoreOptions.newBuilder().setCredentials(
-					GoogleCredentials.fromStream(new FileInputStream(new File(keyPath))).createScoped(SCOPES)).build()
-					.getService();
+				GoogleCredentials.fromStream(new FileInputStream(new File(keyPath))).createScoped(SCOPES)).build()
+				.getService();
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -253,114 +257,101 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerInsert(Message<Object> message) {
-		try {
-			String collectionName = message.headers().get("_collectionName");
-			HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
 
-			String id = insert(entity, collectionName);
-			message
-					.rxReply(id)
-					.onErrorReturn(throwable -> {
-						message.fail(001, throwable.getMessage());
-						return message;
-					}).subscribe();
+		String collectionName = message.headers().get("_collectionName");
+		HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
 
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
-		}
+		String id = insert(entity, collectionName);
+		message
+			.rxReply(id)
+			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
 	}
 
 	private void handlerEmpty(Message<Object> message) {
-		try {
-			String collectionName = message.headers().get("_collectionName");
-			String id = empty(collectionName);
 
-			message.rxReply(id).onErrorReturn(throwable -> {
-				message.fail(001, throwable.getMessage());
-				return message;
-			}).subscribe();
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
-		}
+		String collectionName = message.headers().get("_collectionName");
+		String id = empty(collectionName);
+
+		message.rxReply(id)
+			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+
 	}
 
 	private void handlerUpsert(Message<Object> message) {
-		try {
-			String collectionName = message.headers().get("_collectionName");
-			String id = message.headers().get("_id");
-			HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
-			Boolean idUpdated = upsert(entity, id, collectionName);
 
-			message.rxReply(idUpdated).onErrorReturn(throwable -> {
-				message.fail(001, throwable.getMessage());
-				return message;
-			}).subscribe();
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
-		}
+		String collectionName = message.headers().get("_collectionName");
+		String id = message.headers().get("_id");
+		HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
+		Boolean idUpdated = upsert(entity, id, collectionName);
+
+		message.rxReply(idUpdated)
+			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+
 	}
 
 	private void handlerGet(Message<Object> message) {
-		try {
-			String collectionName = message.headers().get("_collectionName");
-			String id = message.headers().get("_id");
-			Map<String, Object> entity = get(id, collectionName);
 
-			message.rxReply(Json.encode(entity)).onErrorReturn(throwable -> {
-				message.fail(001, throwable.getMessage());
-				return message;
-			}).subscribe();
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
-		}
+		String collectionName = message.headers().get("_collectionName");
+		String id = message.headers().get("_id");
+		Map<String, Object> entity = get(id, collectionName);
+
+		message.rxReply(Json.encode(entity))
+			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+
 	}
 
 	private void handlerUpdate(Message<Object> message) {
-		try {
-			String collectionName = message.headers().get("_collectionName");
-			String id = message.headers().get("_id");
-			HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
-			Boolean updated = update(id, collectionName, entity);
 
-			message.rxReply(Json.encode(updated)).onErrorReturn(throwable -> {
-				message.fail(001, throwable.getMessage());
-				return message;
-			}).subscribe();
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
-		}
+		String collectionName = message.headers().get("_collectionName");
+		String id = message.headers().get("_id");
+		HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
+		Boolean updated = update(id, collectionName, entity);
+
+		message.rxReply(Json.encode(updated))
+			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+
 	}
 
 	private void handlerDelete(Message<Object> message) {
-		try {
-			String collectionName = message.headers().get("_collectionName");
-			String id = message.headers().get("_id");
-			Boolean deleted = delete(id, collectionName);
 
-			message.rxReply(Json.encode(deleted)).onErrorReturn(throwable -> {
-				message.fail(001, throwable.getMessage());
-				return message;
-			}).subscribe();
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
-		}
+		String collectionName = message.headers().get("_collectionName");
+		String id = message.headers().get("_id");
+		Boolean deleted = delete(id, collectionName);
+
+		message.rxReply(Json.encode(deleted))
+			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+
 	}
 
 	private void handlerQueryBuilder(Message<byte[]> message) {
+
 		String collectionName = message.headers().get("_collectionName");
 		Query query = queryBuilder(collectionName);
+		message.rxReply(SerializationUtils.serialize(query))
+			.subscribe(res -> { /**Do nothing */}, err -> handlerByteMsgError(message, err));
 
-		message.rxReply(SerializationUtils.serialize(query)).subscribe();
 	}
 
 	private void handlerQuery(Message<byte[]> message) {
-		try {
-			Query query = (Query) SerializationUtils.deserialize(message.body());
-			List<Map<String, Object>> entityList = get(query);
 
-			message.rxReply(Json.encode(entityList)).subscribe();
-		} catch (RuntimeException e) {
-			message.fail(001, e.getMessage());
+		Query query = SerializationUtils.deserialize(message.body());
+		List<Map<String, Object>> entityList = get(query);
+		message.rxReply(Json.encode(entityList))
+			.subscribe(res -> { /**Do nothing */}, err -> handlerByteMsgError(message, err));
+
+	}
+
+	private void handlerByteMsgError(Message<byte[]> message, Throwable err) {
+		if (err instanceof ReplyException == false) {
+			Log.error(err.getMessage());
+			message.fail(001, err.getMessage());
+		}
+	}
+
+	private void handlerObjectMsgError(Message<Object> message, Throwable err) {
+		if (err instanceof ReplyException == false) {
+			Log.error(err.getMessage());
+			message.fail(001, err.getMessage());
 		}
 	}
 
