@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.1
+### Bugfix
+* Avoid noise timeout log error.
+
 ## 1.0.0
 ### Features
 * Init API methods:
