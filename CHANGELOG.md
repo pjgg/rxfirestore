@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.0.2
+### Logs
+* Add trace logging
+
 ## 1.0.1
 ### Bugfix
 * Avoid noise timeout log error.
