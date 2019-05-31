@@ -51,7 +51,7 @@ import io.vertx.reactivex.core.eventbus.MessageConsumer;
 
 public class FirestoreTemplate extends AbstractVerticle {
 
-	private Logger Log = LoggerFactory.getLogger(FirestoreTemplate.class);
+	private static final Logger LOG = LoggerFactory.getLogger(FirestoreTemplate.class);
 
 	public static final List<String> SCOPES = ImmutableList.of("https://www.googleapis.com/auth/datastore");
 	public static final String TOPIC_INSERT = "FIRESTORE_INSERT";
@@ -76,6 +76,8 @@ public class FirestoreTemplate extends AbstractVerticle {
 			firestore = FirestoreOptions.newBuilder().setCredentials(
 				GoogleCredentials.fromStream(new FileInputStream(new File(keyPath))).createScoped(SCOPES)).build()
 				.getService();
+
+			LOG.trace("GOOGLE_APPLICATION_CREDENTIALS located -> " + keyPath);
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -117,6 +119,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	public String insert(final HashMap<String, Object> entity, final String collectionName) {
+		LOG.trace("Insert blocking Firestore SDK call. Collection " + collectionName);
 
 		SingleEntityIdCallbackHandler singleEntityId = new SingleEntityIdCallbackHandler<String>();
 		ApiFuture<DocumentReference> response = firestore.collection(collectionName).add(entity);
@@ -127,12 +130,16 @@ public class FirestoreTemplate extends AbstractVerticle {
 
 
 	public String empty(final String collectionName) {
+		LOG.trace("Empty blocking Firestore SDK call. Collection " + collectionName);
+
 		DocumentReference response = firestore.collection(collectionName).document();
 		return response.getId();
 	}
 
 
 	public Boolean upsert(final HashMap<String, Object> entity, final String id, final String collectionName) {
+		LOG.trace("Upsert blocking Firestore SDK call. Collection " + collectionName);
+
 		UpdateCallbackHandler updateCallbackHandler = new UpdateCallbackHandler();
 		ApiFuture<WriteResult> response = firestore.collection(collectionName).document(id).set(entity);
 		ApiFutures.addCallback(response, updateCallbackHandler, Runnable::run);
@@ -141,6 +148,8 @@ public class FirestoreTemplate extends AbstractVerticle {
 
 
 	public Map<String, Object> get(final String id, final String collectionName) {
+		LOG.trace("Get blocking Firestore SDK call. Collection " + collectionName);
+
 		SingleEntityCallbackHandler entityCallbackHandler = new SingleEntityCallbackHandler();
 		ApiFuture<DocumentSnapshot> response = firestore.collection(collectionName).document(id).get();
 		ApiFutures.addCallback(response, entityCallbackHandler, Runnable::run);
@@ -148,6 +157,8 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	public List<Map<String, Object>> get(final Query query) {
+		LOG.trace("Query blocking Firestore SDK call. Collection " + query.getCollectionName());
+
 		CollectionReference q = firestore.collection(query.getCollectionName());
 		com.google.cloud.firestore.Query queryBuilder;
 
@@ -198,11 +209,15 @@ public class FirestoreTemplate extends AbstractVerticle {
 
 
 	public Query queryBuilder(final String collectionName) {
+		LOG.trace("QueryBuilder blocking Firestore SDK call. Collection " + collectionName);
+
 		return new Query(collectionName);
 	}
 
 
 	public Boolean update(final String id, final String collectionName, final HashMap<String, Object> entity) {
+		LOG.trace("Update blocking Firestore SDK call. Collection " + collectionName);
+
 		UpdateCallbackHandler updateCallbackHandler = new UpdateCallbackHandler();
 		ApiFuture<WriteResult> response = firestore.collection(collectionName).document(id).update(entity);
 		ApiFutures.addCallback(response, updateCallbackHandler, Runnable::run);
@@ -249,6 +264,8 @@ public class FirestoreTemplate extends AbstractVerticle {
 
 
 	public Boolean delete(final String id, final String collectionName) {
+		LOG.trace("Delete blocking Firestore SDK call. Collection " + collectionName);
+
 		DeleteCallbackHandler deleteCallbackHandler = new DeleteCallbackHandler();
 		ApiFuture<WriteResult> response = firestore.collection(collectionName).document(id).delete();
 		ApiFutures.addCallback(response, deleteCallbackHandler, Runnable::run);
@@ -257,6 +274,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerInsert(Message<Object> message) {
+		LOG.trace("handler insert operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		HashMap entity = Json.decodeValue((String) message.body(), HashMap.class);
@@ -268,6 +286,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerEmpty(Message<Object> message) {
+		LOG.trace("handler empty operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		String id = empty(collectionName);
@@ -278,6 +297,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerUpsert(Message<Object> message) {
+		LOG.trace("handler upsert operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		String id = message.headers().get("_id");
@@ -290,6 +310,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerGet(Message<Object> message) {
+		LOG.trace("handler get operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		String id = message.headers().get("_id");
@@ -301,6 +322,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerUpdate(Message<Object> message) {
+		LOG.trace("handler update operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		String id = message.headers().get("_id");
@@ -313,6 +335,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerDelete(Message<Object> message) {
+		LOG.trace("handler delete operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		String id = message.headers().get("_id");
@@ -324,6 +347,7 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 	private void handlerQueryBuilder(Message<byte[]> message) {
+		LOG.trace("handler query operation called.");
 
 		String collectionName = message.headers().get("_collectionName");
 		Query query = queryBuilder(collectionName);
@@ -343,14 +367,14 @@ public class FirestoreTemplate extends AbstractVerticle {
 
 	private void handlerByteMsgError(Message<byte[]> message, Throwable err) {
 		if (err instanceof ReplyException == false) {
-			Log.error(err.getMessage());
+			LOG.error(err.getMessage());
 			message.fail(001, err.getMessage());
 		}
 	}
 
 	private void handlerObjectMsgError(Message<Object> message, Throwable err) {
 		if (err instanceof ReplyException == false) {
-			Log.error(err.getMessage());
+			LOG.error(err.getMessage());
 			message.fail(001, err.getMessage());
 		}
 	}

@@ -17,6 +17,8 @@
 
 package com.github.pjgg.rxfirestore;
 
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,15 +29,18 @@ import io.reactivex.subjects.SingleSubject;
 
 public class SingleEntityCallbackHandler implements ApiFutureCallback<DocumentSnapshot> {
 
+	private static Logger LOG = LoggerFactory.getLogger(SingleEntityCallbackHandler.class);
 	private SingleSubject<Map<String, Object>> entity = SingleSubject.create();
 
 	@Override
 	public void onFailure(Throwable throwable) {
+		LOG.error(throwable.getMessage());
 		entity.onError(throwable);
 	}
 
 	@Override
 	public void onSuccess(DocumentSnapshot document) {
+		LOG.trace("Blocking firestore SDK response success.");
 		if (document.exists()) {
 			Map<String, Object> data = document.getData();
 			data.put("_id", Optional.ofNullable(document.getId()).orElse("NONE"));

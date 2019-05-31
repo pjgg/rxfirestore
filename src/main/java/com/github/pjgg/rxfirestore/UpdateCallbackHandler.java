@@ -21,18 +21,23 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.cloud.firestore.WriteResult;
 
 import io.reactivex.subjects.SingleSubject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 public class UpdateCallbackHandler implements ApiFutureCallback<WriteResult> {
 
+	private static Logger LOG = LoggerFactory.getLogger(UpdateCallbackHandler.class);
 	private SingleSubject<Boolean> updated = SingleSubject.create();
 
 	@Override
 	public void onFailure(Throwable throwable) {
+		LOG.error(throwable.getMessage());
 		updated.onError(throwable);
 	}
 
 	@Override
 	public void onSuccess(WriteResult writeResult) {
+		LOG.trace("Blocking firestore SDK response success.");
 		updated.onSuccess(true);
 	}
 

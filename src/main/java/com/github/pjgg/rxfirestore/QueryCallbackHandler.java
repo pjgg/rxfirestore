@@ -17,6 +17,8 @@
 
 package com.github.pjgg.rxfirestore;
 
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,15 +33,18 @@ import io.reactivex.subjects.SingleSubject;
 
 public class QueryCallbackHandler implements ApiFutureCallback<QuerySnapshot> {
 
+	private static Logger LOG = LoggerFactory.getLogger(UpdateCallbackHandler.class);
 	private SingleSubject<List<Map<String, Object>>> entities = SingleSubject.create();
 
 	@Override
 	public void onFailure(Throwable throwable) {
+		LOG.error(throwable.getMessage());
 		entities.onError(throwable);
 	}
 
 	@Override
 	public void onSuccess(QuerySnapshot futureDocuments) {
+		LOG.trace("Blocking firestore SDK response success.");
 		List<Map<String, Object>> result = new ArrayList<>();
 		List<QueryDocumentSnapshot> documents = futureDocuments.getDocuments();
 		for (DocumentSnapshot document : documents) {

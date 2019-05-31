@@ -28,6 +28,8 @@ import static com.github.pjgg.rxfirestore.FirestoreTemplate.TOPIC_UPDATE;
 import static com.github.pjgg.rxfirestore.FirestoreTemplate.TOPIC_UPSERT;
 
 import io.reactivex.subjects.SingleSubject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +66,8 @@ import io.vertx.reactivex.core.eventbus.Message;
  */
 public class RxFirestoreSdk<E extends Entity> {
 
+	private static final Logger LOG = LoggerFactory.getLogger(RxFirestoreSdk.class);
+
 	private static final long SEND_TIMEOUT_MS = 59000;
 	private final Supplier<? extends Entity> supplier;
 	private final BlockingFirestoreTemplate blockingFirestoreTemplate;
@@ -93,15 +97,29 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return Single document key ID.
 	 */
 	public Single<String> insert(final E entity) {
+
+		LOG.trace("insert called. Collection name "
+			+ entity.getCollectionName()
+			+ " Entity "
+			+ Json.encode(entity.toMap()));
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", entity.getCollectionName());
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<String>rxSend(TOPIC_INSERT, Json.encode(entity.toMap()), deliveryOpt)
 				.map(Message::body)
-				.map(message -> message);
+				.map(message -> {
+					LOG.trace("Reply received. Msg " + message);
+					return message;
+				});
 	}
 
 	/**
@@ -113,15 +131,25 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return Single document key ID.
 	 */
 	public Single<String> empty(final String collectionName) {
+		LOG.trace("empty called. Collection name " + collectionName);
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<String>rxSend(TOPIC_EMPTY, "", deliveryOpt)
 				.map(Message::body)
-				.map(message -> message);
+				.map(message -> {
+					LOG.trace("Reply received. Msg " + message);
+					return message;
+				});
 	}
 
 	/**
@@ -136,19 +164,36 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * var query = carsRepository.queryBuilder(CarModel.CARS_COLLECTION_NAME).whereEqualTo("brand","Toyota");
 	 */
 	public Single<Query> queryBuilder(final String collectionName) {
+		LOG.trace("queryBuilder called. Collection name " + collectionName);
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
 		deliveryOpt.addHeader("_collectionName", collectionName);
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<byte[]>rxSend(TOPIC_QUERY_BUILDER, "", deliveryOpt)
 				.map(Message::body)
-				.map(message -> SerializationUtils.deserialize(message));
+				.map(message -> {
+					LOG.trace("Reply received. Query created ");
+					return  SerializationUtils.deserialize(message);
+				});
 	}
 
 	public Query queryBuilderSync(final String collectionName) {
-		return blockingFirestoreTemplate.queryBuilder(collectionName);
+
+		LOG.trace("queryBuilderSync called. Collection name " + collectionName);
+
+		Query queryBuilderResult = blockingFirestoreTemplate.queryBuilder(collectionName);
+
+		LOG.trace("Reply received. Query created ");
+
+		return queryBuilderResult;
 	}
 
 	/**
@@ -158,10 +203,17 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return a single list of documents that match query criteria.
 	 */
 	public Single<List<E>> get(Query query) {
+		LOG.trace("get called. Collection name " + query.getCollectionName());
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
 		deliveryOpt.setSendTimeout(SEND_TIMEOUT_MS);
+
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
 
 		return eventBus.<String>rxSend(TOPIC_QUERY, SerializationUtils.serialize(query), deliveryOpt)
 				.map(Message::body)
@@ -170,6 +222,7 @@ public class RxFirestoreSdk<E extends Entity> {
 					List<HashMap> data = Json.decodeValue(message, new TypeReference<List<HashMap>>() {
 					});
 					data.stream().forEach(elem -> result.add((E) supplier.get().fromJsonAsMap(elem)));
+					LOG.trace("Reply received. Amount of elements retrieved " + result.size());
 					return result;
 				});
 	}
@@ -182,6 +235,8 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return Single document
 	 */
 	public Single<E> get(final String id, final String collectionName) {
+		LOG.trace("get called. Collection name " + collectionName + " ID " + id);
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
@@ -189,10 +244,16 @@ public class RxFirestoreSdk<E extends Entity> {
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<String>rxSend(TOPIC_GET, "", deliveryOpt)
 				.map(Message::body)
 				.map(message -> {
 					HashMap data = Json.decodeValue(message, HashMap.class);
+					LOG.trace("Reply received.");
 					return (E) supplier.get().fromJsonAsMap(data);
 				});
 	}
@@ -209,6 +270,8 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return Single boolean.
 	 */
 	public Single<Boolean> upsert(final String id, final String collectionName, final E entity) {
+		LOG.trace("upsert called. Collection name " + collectionName + " ID " + id);
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
@@ -216,9 +279,17 @@ public class RxFirestoreSdk<E extends Entity> {
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<Boolean>rxSend(TOPIC_UPSERT, entity.toMap(), deliveryOpt)
 				.map(Message::body)
-				.map(message -> message);
+				.map(message -> {
+					LOG.trace("Reply received. Element " + id + " updated or created.");
+					return message;
+				});
 	}
 
 	/**
@@ -228,6 +299,8 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return Single boolean. True means updated.
 	 */
 	public Single<Boolean> update(final String id, final String collectionName, final E entity) {
+		LOG.trace("update called. Collection name " + collectionName + " ID " + id);
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
@@ -235,9 +308,17 @@ public class RxFirestoreSdk<E extends Entity> {
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<String>rxSend(TOPIC_UPDATE, Json.encode(entity.toMap()), deliveryOpt)
 				.map(Message::body)
-				.map(message -> Boolean.valueOf(message));
+				.map(message -> {
+					LOG.trace("Reply received. Element " + id + " updated.");
+					return Boolean.valueOf(message);
+				});
 	}
 
 
@@ -247,6 +328,8 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * @return Single boolean
 	 */
 	public Single<Boolean> delete(final String id, final String collectionName) {
+		LOG.trace("delete called. Collection name " + collectionName + " ID " + id);
+
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
 		deliveryOpt.setLocalOnly(true);
@@ -254,9 +337,17 @@ public class RxFirestoreSdk<E extends Entity> {
 		deliveryOpt.addHeader("_collectionName", collectionName);
 		deliveryOpt.addHeader("_id", id);
 
+		LOG.trace("Sending msg to Eventbus. Delivery option: timeout "
+			+ deliveryOpt.getSendTimeout()
+			+ " local only "
+			+ deliveryOpt.isLocalOnly());
+
 		return eventBus.<String>rxSend(TOPIC_DELETE, "", deliveryOpt)
 				.map(Message::body)
-				.map(message -> Boolean.valueOf(message));
+				.map(message -> {
+					LOG.trace("Reply received. Element " + id + " deleted.");
+					return Boolean.valueOf(message);
+				});
 	}
 
 	/**
