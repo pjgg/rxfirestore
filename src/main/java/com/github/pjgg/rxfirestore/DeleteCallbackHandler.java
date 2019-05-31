@@ -21,18 +21,24 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.cloud.firestore.WriteResult;
 
 import io.reactivex.subjects.SingleSubject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 public class DeleteCallbackHandler implements ApiFutureCallback<WriteResult> {
+
+	private static Logger LOG = LoggerFactory.getLogger(DeleteCallbackHandler.class);
 
 	private SingleSubject<Boolean> deleted = SingleSubject.create();
 
 	@Override
 	public void onFailure(Throwable throwable) {
+		LOG.error(throwable.getMessage());
 		deleted.onError(throwable);
 	}
 
 	@Override
 	public void onSuccess(WriteResult writeResult) {
+		LOG.trace("Blocking firestore SDK response success.");
 		deleted.onSuccess(true);
 	}
 
