@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.0.3
+### Logs
+* Improve Readme
+* upgrade com.google.cloud:google-cloud-firestore to 1.0.6
+
 ## 1.0.2
 ### Logs
 * Add trace logging
