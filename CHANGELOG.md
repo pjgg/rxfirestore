@@ -1,7 +1,7 @@
 # CHANGELOG
 
 ## 1.0.3
-### Logs
+### Dependencies
 * Improve Readme
 * upgrade com.google.cloud:google-cloud-firestore to 1.0.6
 
