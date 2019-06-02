@@ -1,5 +1,8 @@
-# RxFirestore (Alpha)
+# RxFirestore
 [![Build Status](https://travis-ci.org/pjgg/rxfirestore.svg?branch=master)](https://travis-ci.org/pjgg/rxfirestore)
+[![GitHub release](https://img.shields.io/maven-central/v/com.github.pjgg/rxfirestore.svg?color=dark%20green)](https://github.com/pjgg/rxfirestore/releases)
+[![GitHub license](https://img.shields.io/hexpm/l/plug.svg)](https://github.com/pjgg/rxfirestore/blob/master/LICENSE.txt)
+
 <img align="right" src="https://github.com/pjgg/rxfirestore/blob/master/firestoreLogo.png">
 
 RxFirestore is a [Firestore](https://cloud.google.com/firestore/) SDK written in a reactive way.
@@ -10,7 +13,7 @@ You could have a look our [Motivation](#motivation) in order to understand WHY o
 
 - [Current state](#current-state)
 - [Motivation](#motivation)
-- [Design approach Version 1.0.6](#design-approach)
+- [Design approach Version 1.0.3](#design-approach)
 - [Minimum Requirements](#minimum-requirements)
 - [Maven useful commands](#maven-useful-commands)
 - [How to use it](#How-to-use-it)
@@ -59,7 +62,6 @@ This event bus will be consumed by a Vertx Actor (Worker Verticle), executing al
 ## Maven useful commands
 
 * build RxFirestore project: ```mvn clean install -DskipTests```
-* deploy RxFirestore SDK into nexus: ```mvn firestore deploy -DskipTests```
 
 ## How to use it
 
@@ -69,9 +71,48 @@ This event bus will be consumed by a Vertx Actor (Worker Verticle), executing al
 <dependency>
   <groupId>com.github.pjgg</groupId>
   <artifactId>rxfirestore</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
 </dependency>
 ```
+
+If your project is packaged as a fatjar consider to use `ServicesResourceTransformer`.
+JAR files providing implementations of some interfaces often ship with a META-INF/services/ directory that maps interfaces to their implementation classes for lookup by the service locator.
+To relocate the class names of these implementation classes, and to merge multiple implementations of the same interface into one service entry use the ServicesResourceTransformer.
+
+example:
+```
+<project>
+  ...
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+             	<finalName>your-app-with-dependencies</finalName>
+             	<transformers>
+             	<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+             	<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+             	    <mainClass>${main.class}</mainClass>
+             	</transformer>
+             	</transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  ...
+</project>
+
+```
+
 
 2. Create your own repository and extends `RxFirestoreSdk`. You must provide your entity model as parameters.
 
