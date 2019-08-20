@@ -27,7 +27,10 @@ import static com.github.pjgg.rxfirestore.FirestoreTemplate.TOPIC_QUERY_BUILDER;
 import static com.github.pjgg.rxfirestore.FirestoreTemplate.TOPIC_UPDATE;
 import static com.github.pjgg.rxfirestore.FirestoreTemplate.TOPIC_UPSERT;
 
+import com.github.pjgg.rxfirestore.exceptions.NotFoundExceptions;
+import io.reactivex.Observable;
 import io.reactivex.subjects.SingleSubject;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.eventbus.EventBus;
@@ -76,8 +79,8 @@ public class RxFirestoreSdk<E extends Entity> {
 		supplier = Objects.requireNonNull(entityConstructor);
 		FirestoreTemplateFactory.INSTANCE.init();
 		blockingFirestoreTemplate = new BlockingFirestoreTemplate(
-				supplier,
-				FirestoreTemplateFactory.INSTANCE.getVertx()
+			supplier,
+			FirestoreTemplateFactory.INSTANCE.getVertx()
 		);
 	}
 
@@ -101,7 +104,7 @@ public class RxFirestoreSdk<E extends Entity> {
 		LOG.trace("insert called. Collection name "
 			+ entity.getCollectionName()
 			+ " Entity "
-			+ Json.encode(entity.toMap()));
+			+ entity.toJson());
 
 		final EventBus eventBus = FirestoreTemplateFactory.INSTANCE.getEventBus();
 		final DeliveryOptions deliveryOpt = new DeliveryOptions();
@@ -114,18 +117,18 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ " local only "
 			+ deliveryOpt.isLocalOnly());
 
-		return eventBus.<String>rxSend(TOPIC_INSERT, Json.encode(entity.toMap()), deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					LOG.trace("Reply received. Msg " + message);
-					return message;
-				});
+		return eventBus.<String>rxSend(TOPIC_INSERT, entity.toJson(), deliveryOpt)
+			.map(Message::body)
+			.map(message -> {
+				LOG.trace("Reply received. Msg " + message);
+				return message;
+			});
 	}
 
 	/**
-	 * Empty create a document for a given collection, and return an an auto-generate ID. In some cases,
-	 * it can be useful to create a document reference with an auto-generated ID,
-	 * then use the reference later through a upsert method.
+	 * Empty create a document for a given collection, and return an an auto-generate ID. In some cases, it can be
+	 * useful to create a document reference with an auto-generated ID, then use the reference later through a upsert
+	 * method.
 	 *
 	 * @param collectionName against which you want to make the query.
 	 * @return Single document key ID.
@@ -145,11 +148,11 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ deliveryOpt.isLocalOnly());
 
 		return eventBus.<String>rxSend(TOPIC_EMPTY, "", deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					LOG.trace("Reply received. Msg " + message);
-					return message;
-				});
+			.map(Message::body)
+			.map(message -> {
+				LOG.trace("Reply received. Msg " + message);
+				return message;
+			});
 	}
 
 	/**
@@ -178,11 +181,11 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ deliveryOpt.isLocalOnly());
 
 		return eventBus.<byte[]>rxSend(TOPIC_QUERY_BUILDER, "", deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					LOG.trace("Reply received. Query created ");
-					return  SerializationUtils.deserialize(message);
-				});
+			.map(Message::body)
+			.map(message -> {
+				LOG.trace("Reply received. Query created ");
+				return SerializationUtils.deserialize(message);
+			});
 	}
 
 	public Query queryBuilderSync(final String collectionName) {
@@ -216,15 +219,15 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ deliveryOpt.isLocalOnly());
 
 		return eventBus.<String>rxSend(TOPIC_QUERY, SerializationUtils.serialize(query), deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					List<E> result = new ArrayList<>();
-					List<HashMap> data = Json.decodeValue(message, new TypeReference<List<HashMap>>() {
-					});
-					data.stream().forEach(elem -> result.add((E) supplier.get().fromJsonAsMap(elem)));
-					LOG.trace("Reply received. Amount of elements retrieved " + result.size());
-					return result;
+			.map(Message::body)
+			.map(message -> {
+				List<E> result = new ArrayList<>();
+				List<HashMap> data = Json.decodeValue(message, new TypeReference<List<HashMap>>() {
 				});
+				data.stream().forEach(elem -> result.add((E) supplier.get().fromJsonAsMap(elem)));
+				LOG.trace("Reply received. Amount of elements retrieved " + result.size());
+				return result;
+			});
 	}
 
 	/**
@@ -250,12 +253,12 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ deliveryOpt.isLocalOnly());
 
 		return eventBus.<String>rxSend(TOPIC_GET, "", deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					HashMap data = Json.decodeValue(message, HashMap.class);
-					LOG.trace("Reply received.");
-					return (E) supplier.get().fromJsonAsMap(data);
-				});
+			.map(Message::body)
+			.map(message -> {
+				HashMap data = Json.decodeValue(message, HashMap.class);
+				LOG.trace("Reply received.");
+				return (E) supplier.get().fromJsonAsMap(data);
+			});
 	}
 
 	/**
@@ -284,12 +287,12 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ " local only "
 			+ deliveryOpt.isLocalOnly());
 
-		return eventBus.<Boolean>rxSend(TOPIC_UPSERT, entity.toMap(), deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					LOG.trace("Reply received. Element " + id + " updated or created.");
-					return message;
-				});
+		return eventBus.<Boolean>rxSend(TOPIC_UPSERT, entity.toJson(), deliveryOpt)
+			.map(Message::body)
+			.map(message -> {
+				LOG.trace("Reply received. Element " + id + " updated or created.");
+				return message;
+			});
 	}
 
 	/**
@@ -313,12 +316,12 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ " local only "
 			+ deliveryOpt.isLocalOnly());
 
-		return eventBus.<String>rxSend(TOPIC_UPDATE, Json.encode(entity.toMap()), deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					LOG.trace("Reply received. Element " + id + " updated.");
-					return Boolean.valueOf(message);
-				});
+		return eventBus.<String>rxSend(TOPIC_UPDATE, entity.toJson(), deliveryOpt)
+			.map(Message::body)
+			.map(message -> {
+				LOG.trace("Reply received. Element " + id + " updated.");
+				return Boolean.valueOf(message);
+			});
 	}
 
 
@@ -343,11 +346,11 @@ public class RxFirestoreSdk<E extends Entity> {
 			+ deliveryOpt.isLocalOnly());
 
 		return eventBus.<String>rxSend(TOPIC_DELETE, "", deliveryOpt)
-				.map(Message::body)
-				.map(message -> {
-					LOG.trace("Reply received. Element " + id + " deleted.");
-					return Boolean.valueOf(message);
-				});
+			.map(Message::body)
+			.map(message -> {
+				LOG.trace("Reply received. Element " + id + " deleted.");
+				return Boolean.valueOf(message);
+			});
 	}
 
 	/**
@@ -371,16 +374,13 @@ public class RxFirestoreSdk<E extends Entity> {
 	 * <p>
 	 * example:
 	 * <p>
-	 * {@code
-	 * listener.getEventsFlow().subscribe(event ->
-	 * System.out.println("Event Type:"+ event.getEventType() + " model: " +
-	 * event.getModel()));}
-	 *
+	 * {@code listener.getEventsFlow().subscribe(event -> System.out.println("Event Type:"+ event.getEventType() + "
+	 * model: " + event.getModel()));}
 	 */
 
 	public EventListenerResponse<E> addQueryListener(final Query query,
-			final Optional<EventListener<QuerySnapshot>> eventsHandler)
-			throws InterruptedException, ExecutionException, TimeoutException {
+		final Optional<EventListener<QuerySnapshot>> eventsHandler)
+		throws InterruptedException, ExecutionException, TimeoutException {
 		return blockingFirestoreTemplate.addQueryListener(query, eventsHandler);
 	}
 

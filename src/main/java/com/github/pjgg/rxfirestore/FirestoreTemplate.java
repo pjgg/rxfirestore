@@ -17,7 +17,10 @@
 
 package com.github.pjgg.rxfirestore;
 
+import com.github.pjgg.rxfirestore.exceptions.RxFirestoreExceptions;
 import com.google.cloud.firestore.CollectionReference;
+import io.reactivex.Single;
+import io.reactivex.subjects.SingleSubject;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -147,12 +150,13 @@ public class FirestoreTemplate extends AbstractVerticle {
 	}
 
 
-	public Map<String, Object> get(final String id, final String collectionName) {
+	public Map<String, Object> get(final String id, final String collectionName) throws RxFirestoreExceptions {
 		LOG.trace("Get blocking Firestore SDK call. Collection " + collectionName);
 
 		SingleEntityCallbackHandler entityCallbackHandler = new SingleEntityCallbackHandler();
 		ApiFuture<DocumentSnapshot> response = firestore.collection(collectionName).document(id).get();
 		ApiFutures.addCallback(response, entityCallbackHandler, Runnable::run);
+
 		return entityCallbackHandler.getEntity().blockingGet();
 	}
 
@@ -312,12 +316,18 @@ public class FirestoreTemplate extends AbstractVerticle {
 	private void handlerGet(Message<Object> message) {
 		LOG.trace("handler get operation called.");
 
-		String collectionName = message.headers().get("_collectionName");
-		String id = message.headers().get("_id");
-		Map<String, Object> entity = get(id, collectionName);
+		try {
+			String collectionName = message.headers().get("_collectionName");
+			String id = message.headers().get("_id");
+			Map<String, Object> entity = get(id, collectionName);
 
-		message.rxReply(Json.encode(entity))
-			.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+			message.rxReply(Json.encode(entity))
+				.doOnError(err -> message.fail(001, err.getMessage()))
+				.subscribe(res -> { /**Do nothing */}, err -> handlerObjectMsgError(message, err));
+
+		} catch (RxFirestoreExceptions err) {
+			message.fail(err.getErrorCode(), err.getMessage());
+		}
 
 	}
 

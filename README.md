@@ -141,6 +141,146 @@ public class VehicleRepository extends RxFirestoreSDK<Vehicle> {
 
 3. Add `GOOGLE_APPLICATION_CREDENTIALS` environment variable to your project, pointing to your keyfile.json
 4. *(Optional)* Add `DB_THREAD_POOL_SIZE` environment variable to your project. Default value is set to the amount of cores * 2.
+5. Create your entity model
+
+All entities must extend `Entity` interface and implements `getCollectionName` and `fromJsonAsMap`
+
+* getCollectionName: Must return you firestore collection name
+* fromJsonAsMap: will receive a JSON as a Map format and must return a Java entity
+
+Example:
+
+```
+/*
+ * Copyright 2019 RxFirestore.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *  https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package com.github.pjgg.rxfirestore;
+
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.Json;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+public class Vehicle implements Entity {
+
+	public final static String CARS_COLLECTION_NAME = "cars";
+	public final static String BRAND = "brand";
+	public final static String MODEL = "model";
+	public final static String ELECTRIC = "electric";
+	public final static String DISPLACEMENT = "displacement";
+
+	private String id;
+	private String eventType;
+
+	@JsonProperty(value="brandy")
+	private String brand;
+	private String model;
+	private Boolean electric;
+	private Number displacement;
+
+	@JsonFormat(shape = Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+	private Date createdDate;
+
+	public Vehicle() {
+	}
+
+	public Vehicle(String brand, String model, Boolean electric) {
+		this.brand = brand;
+		this.model = model;
+		this.electric = electric;
+		this.displacement = 0;
+		this.createdDate = new Date();
+	}
+
+	@Override
+	public String getCollectionName() {
+		return CARS_COLLECTION_NAME;
+	}
+
+	@Override
+	public Entity fromJsonAsMap(Map<String, Object> json) {
+
+		this.brand = (String) json.getOrDefault(BRAND, "NONE");
+		this.model = (String) json.getOrDefault(MODEL, "NONE");
+		this.electric = (Boolean) json.getOrDefault(ELECTRIC, false);
+
+		this.displacement = (Number) json.getOrDefault("displacement", 0);
+		this.id = (String) json.getOrDefault("_id", "NONE");
+		this.eventType = (String) json.getOrDefault("_eventType", "NONE");
+
+		return this;
+	}
+
+	public String getBrand() {
+		return brand;
+	}
+
+	public void setBrand(String brand) {
+		this.brand = brand;
+	}
+
+	public String getModel() {
+		return model;
+	}
+
+	public void setModel(String model) {
+		this.model = model;
+	}
+
+	public Boolean getElectric() {
+		return electric;
+	}
+
+	public void setElectric(Boolean electric) {
+		this.electric = electric;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getEventType() {
+		return eventType;
+	}
+
+	public void setEventType(String eventType) {
+		this.eventType = eventType;
+	}
+
+	public Number getDisplacement() {
+		return displacement;
+	}
+
+	public void setDisplacement(Number displacement) {
+		this.displacement = displacement;
+	}
+}
+
+```
+
+
+*Note:* As you have notice we support Jackson annotations in order to define data types and field names.
 
 ## API methods
 
@@ -235,3 +375,4 @@ To delete a document, use the delete method. Deleting a document does not delete
 ```
 Single<Boolean> delete(final String id, final String collectionName)
 ```
+

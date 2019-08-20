@@ -17,8 +17,13 @@
 
 package com.github.pjgg.rxfirestore;
 
+import com.fasterxml.jackson.annotation.JsonFormat.Shape;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.json.Json;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class Vehicle implements Entity {
 
@@ -28,13 +33,15 @@ public class Vehicle implements Entity {
 	public final static String ELECTRIC = "electric";
 	public final static String DISPLACEMENT = "displacement";
 
-
 	private String id;
 	private String eventType;
 	private String brand;
 	private String model;
 	private Boolean electric;
 	private Number displacement;
+
+	@JsonFormat(shape = Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
+	private Date createdDate;
 
 	public Vehicle() {
 	}
@@ -44,16 +51,7 @@ public class Vehicle implements Entity {
 		this.model = model;
 		this.electric = electric;
 		this.displacement = 0;
-	}
-
-	@Override
-	public HashMap<String, Object> toMap() {
-		return new HashMap<String, Object>() {{
-			put(BRAND, brand);
-			put(MODEL, model);
-			put(ELECTRIC, electric);
-			put(DISPLACEMENT, displacement);
-		}};
+		this.createdDate = new Date();
 	}
 
 	@Override

@@ -17,6 +17,7 @@
 
 package com.github.pjgg.rxfirestore;
 
+import com.github.pjgg.rxfirestore.exceptions.NotFoundExceptions;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class SingleEntityCallbackHandler implements ApiFutureCallback<DocumentSn
 			data.put("_id", Optional.ofNullable(document.getId()).orElse("NONE"));
 			entity.onSuccess(data);
 		} else {
-			entity.onError(new RuntimeException("Not Found"));
+			entity.onError(new NotFoundExceptions("Document Not found"));
 		}
 	}
 

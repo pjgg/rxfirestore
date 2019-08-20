@@ -17,18 +17,21 @@
 
 package com.github.pjgg.rxfirestore;
 
+import io.vertx.core.json.Json;
 import java.util.HashMap;
 import java.util.Map;
 
 public interface Entity {
 
-	HashMap<String, Object> toMap();
-
 	String getCollectionName();
 
 	/**
 	 * Note that your will receive two extra fields _id and _eventType
-	 * */
+	 */
 	Entity fromJsonAsMap(Map<String, Object> json);
+
+	default String toJson() {
+		return Json.encode(this);
+	}
 
 }
