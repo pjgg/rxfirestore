@@ -18,8 +18,11 @@
 package com.github.pjgg.rxfirestore;
 
 import static com.github.pjgg.rxfirestore.Vehicle.DISPLACEMENT;
+import static com.github.pjgg.rxfirestore.exceptions.NotFoundExceptions.NOT_FOUND_CODE;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.github.pjgg.rxfirestore.exceptions.NotFoundExceptions;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.util.List;
@@ -44,9 +47,11 @@ public class RxfirestoreGetTest {
 		testContext = new VertxTestContext();
 		Query query = TestSuite.getInstance().vehicleRepository.queryBuilderSync(Vehicle.CARS_COLLECTION_NAME);
 
-		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet().forEach(vehicle -> {
-			TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME).blockingGet();
-		});
+		TestSuite.getInstance().vehicleRepository.get(query.whereEqualTo("brand", brandName)).blockingGet()
+			.forEach(vehicle -> {
+				TestSuite.getInstance().vehicleRepository.delete(vehicle.getId(), Vehicle.CARS_COLLECTION_NAME)
+					.blockingGet();
+			});
 
 	}
 
@@ -57,7 +62,8 @@ public class RxfirestoreGetTest {
 		String expectedModel = "Auris";
 		Vehicle vehicle = new Vehicle(brandName, expectedModel, true);
 
-		Single<Vehicle> retrievedCar = TestSuite.getInstance().vehicleRepository.insert(vehicle).flatMap(id -> TestSuite.getInstance().vehicleRepository.get(id, Vehicle.CARS_COLLECTION_NAME));
+		Single<Vehicle> retrievedCar = TestSuite.getInstance().vehicleRepository.insert(vehicle)
+			.flatMap(id -> TestSuite.getInstance().vehicleRepository.get(id, Vehicle.CARS_COLLECTION_NAME));
 		Observable<Vehicle> result = Observable.fromFuture(retrievedCar.toFuture());
 
 		result.subscribe(testObserver);
@@ -70,6 +76,33 @@ public class RxfirestoreGetTest {
 		});
 
 		assertThat(testContext.awaitCompletion(1, TimeUnit.SECONDS)).isTrue();
+
+	}
+
+	@Test
+	public void should_get_car_doesnt_exist() throws Throwable {
+
+		TestObserver<Vehicle> testObserver = new TestObserver();
+		String expectedModel = "Auris";
+		Vehicle vehicle = new Vehicle(brandName, expectedModel, true);
+
+		Single<Vehicle> retrievedCar = TestSuite.getInstance().vehicleRepository.insert(vehicle)
+			.flatMap(id -> TestSuite.getInstance().vehicleRepository.get("001", Vehicle.CARS_COLLECTION_NAME));
+		Observable<Vehicle> result = Observable.fromFuture(retrievedCar.toFuture());
+
+		result.subscribe(testObserver);
+		testObserver.assertError(err -> {
+
+			if (err.getCause() instanceof ReplyException) {
+				int errorCode = ((ReplyException) err.getCause()).failureCode();
+				testContext.completeNow();
+				return errorCode == NOT_FOUND_CODE;
+			}
+
+			return false;
+		});
+
+		assertThat(testContext.awaitCompletion(3, TimeUnit.SECONDS)).isTrue();
 
 	}
 
@@ -170,7 +203,6 @@ public class RxfirestoreGetTest {
 				.whereEqualTo("model", "doesn't exist");
 			return vehicleRepository.get(query);
 		});
-
 
 		Observable<List<Vehicle>> result = Observable.fromFuture(vehicles.toFuture());
 

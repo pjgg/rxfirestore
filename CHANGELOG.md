@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.0.4
+### Feature
+* Support Jackson annotations in order to define data types and database field names
+* toMap Entity method is never required anymore.
+
+### Bugfix
+* handler GET document not found error
+
 ## 1.0.3
 ### Dependencies
 * Improve Readme
