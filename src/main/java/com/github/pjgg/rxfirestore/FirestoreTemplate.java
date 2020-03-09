@@ -72,16 +72,15 @@ public class FirestoreTemplate extends AbstractVerticle {
 	public FirestoreTemplate() {
 
 		try {
-
-			String keyPath = Optional.ofNullable(System.getenv("GOOGLE_APPLICATION_CREDENTIALS")).orElseThrow(
-				() -> new IllegalArgumentException("GOOGLE_APPLICATION_CREDENTIALS is not set in the environment"));
-
-			firestore = FirestoreOptions.newBuilder().setCredentials(
-				GoogleCredentials.fromStream(new FileInputStream(new File(keyPath))).createScoped(SCOPES)).build()
-				.getService();
-
-			LOG.trace("GOOGLE_APPLICATION_CREDENTIALS located -> " + keyPath);
-
+			firestore = FirestoreOptions.newBuilder()
+					/*
+					* See for further information about authentication
+					* https://cloud.google.com/docs/authentication/production
+					* In order to use different project-id than the one defined in applicationDefaultCredentials
+					* you can use GCLOUD_PROJECT environment variable 
+					*/
+					.setCredentials(GoogleCredentials.getApplicationDefault().createScoped(FirestoreTemplate.SCOPES))
+					.build().getService();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
