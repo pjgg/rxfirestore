@@ -13,7 +13,7 @@ You could have a look our [Motivation](#motivation) in order to understand WHY o
 
 - [Current state](#current-state)
 - [Motivation](#motivation)
-- [Design approach Version 1.0.3](#design-approach)
+- [Design approach Version 1.0.5](#design-approach)
 - [Minimum Requirements](#minimum-requirements)
 - [Maven useful commands](#maven-useful-commands)
 - [How to use it](#How-to-use-it)
@@ -71,7 +71,7 @@ This event bus will be consumed by a Vertx Actor (Worker Verticle), executing al
 <dependency>
   <groupId>com.github.pjgg</groupId>
   <artifactId>rxfirestore</artifactId>
-  <version>1.0.3</version>
+  <version>1.0.5</version>
 </dependency>
 ```
 
