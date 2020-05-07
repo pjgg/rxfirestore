@@ -41,7 +41,7 @@
     <firestore.version>1.6.0</firestore.version>
     <powermock.version>1.7.4</powermock.version>
     <apache.commons.version>3.8.1</apache.commons.version>
-    <vertx.version>3.7.0</vertx.version>
+    <vertx.version>3.8.5</vertx.version>
     <assertj.version>3.8.0</assertj.version>
   </properties>
 
