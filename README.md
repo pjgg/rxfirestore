@@ -71,7 +71,7 @@ This event bus will be consumed by a Vertx Actor (Worker Verticle), executing al
 <dependency>
   <groupId>com.github.pjgg</groupId>
   <artifactId>rxfirestore</artifactId>
-  <version>1.0.5</version>
+  <version>1.0.7</version>
 </dependency>
 ```
 
